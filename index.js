@@ -18,7 +18,8 @@ const secret = 'asdfghjklyuiop';
 
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use('/uploads', express.static(__dirname + '/uploads'));
 
 dotenv.config({ path: './config.env' })
 
@@ -91,14 +92,22 @@ app.post('/post', uploadMiddleware.single('file'), async (req, res) => {
             author: info.id,
         })
         res.json({ postDoc });
-        // res.json(info);
     });
 
 
 });
 
 app.get('/post', async (req, res) => {
-    res.json(await Post.find().populate('author', ['username']));
+    res.json(await Post.find()
+        .populate('author', ['username'])
+        .sort({ createdAt: -1 })
+        .limit(20));
 });
+
+app.get('/post/:id', async (req, res) => {
+    const { id } = req.params;
+    const postDoc = await Post.findById(id).populate('author', ['username']);
+    res.json(postDoc);
+})
 
 app.listen(4000);
